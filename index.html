@@ -210,6 +210,20 @@
             font-size: 1.05em;
         }
 
+        .scripture-link {
+            color: var(--secondary-color);
+            text-decoration: none;
+            transition: color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .scripture-link:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
         .scripture-text {
             color: var(--text-dark);
             font-style: italic;
@@ -891,12 +905,17 @@
                                 <span class="icon">📖</span>
                                 Scripture References
                             </h4>
-                            ${q.scriptures.map(s => `
+                            ${q.scriptures.map(s => {
+                                const url = getScriptureUrl(s.reference);
+                                return `
                                 <div class="scripture-ref">
-                                    <div class="scripture-citation">${s.reference}</div>
+                                    <div class="scripture-citation">
+                                        ${url ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="scripture-link">${s.reference} 🔗</a>` : s.reference}
+                                    </div>
                                     <div class="scripture-text">"${s.text}"</div>
                                 </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                         
                         <div class="insight-section">
@@ -925,6 +944,50 @@
                 'questions': 'Doubt & Questions'
             };
             return names[category] || category;
+        }
+
+        function getScriptureUrl(reference) {
+            // Parse the scripture reference (e.g., "Alma 32:21" or "2 Nephi 4:17-19")
+            const bookMap = {
+                '1 nephi': '1-ne',
+                '2 nephi': '2-ne',
+                'jacob': 'jacob',
+                'enos': 'enos',
+                'jarom': 'jarom',
+                'omni': 'omni',
+                'words of mormon': 'w-of-m',
+                'mosiah': 'mosiah',
+                'alma': 'alma',
+                'helaman': 'hel',
+                '3 nephi': '3-ne',
+                '4 nephi': '4-ne',
+                'mormon': 'morm',
+                'ether': 'ether',
+                'moroni': 'moro',
+                // Other scriptures
+                'd&c': 'dc-testament',
+                'doctrine and covenants': 'dc-testament'
+            };
+
+            // Extract book, chapter, and verses
+            const match = reference.match(/^([\d\s\w&]+?)\s+(\d+):(\d+(?:-\d+)?)/i);
+            if (!match) return null;
+
+            const bookName = match[1].trim().toLowerCase();
+            const chapter = match[2];
+            const verses = match[3];
+
+            const bookSlug = bookMap[bookName];
+            if (!bookSlug) return null;
+
+            // Determine if it's Book of Mormon or D&C
+            const testament = bookSlug === 'dc-testament' ? 'dc-testament' : 'bofm';
+            
+            // Build the URL
+            const baseUrl = 'https://www.churchofjesuschrist.org/study/scriptures';
+            const url = `${baseUrl}/${testament}/${bookSlug}/${chapter}?lang=eng&id=${verses}#p${verses.split('-')[0]}`;
+            
+            return url;
         }
 
         function toggleCard(id) {
